@@ -54,3 +54,4 @@ def check_password(db, username, password):
     if db(db.users_auth.user_id == user_id and db.users_auth.password == hash).select():
         return True
     return False
+
