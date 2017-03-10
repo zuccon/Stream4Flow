@@ -1,0 +1,122 @@
+{{extend 'layout.html'}}
+
+<meta http-equiv="refresh" content="3" />
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-
+
+ui.min.js"></script>
+
+
+<script>
+    // Set correct menu view.
+    $('#menu-about').addClass('active');
+
+
+</script>
+
+<script type="text/javascript">
+
+ $(document).ready(function() {
+    $("#testDiv").dialog({
+        height: 140,
+        modal: true,
+        open: function(event, ui){
+           setTimeout("$('#testDiv').dialog('close')",2000);
+        }
+    });
+ });
+
+</script>
+
+{{if 'alert_type2' in globals():}}
+<div class="alert alert-{{=alert_type2}}" id="testDiv" role="alert">
+
+    <strong>
+        {{if alert_type2 == "danger":}}Error:
+        {{elif alert_type2 == "success":}}Success:
+        {{elif alert_type2 == "info":}}Info:
+        {{elif alert_type2 == "warning":}}Warning:
+        {{pass}}
+    </strong>{{=alert_message2}}
+
+</div>
+{{pass}}
+
+
+<head>
+    <link href="{{=URL('static','css/test.css')}}" rel="stylesheet" type="text/css" media="all">
+    <link rel="stylesheet" type="text/css" href="../static/css/progressCluster.css" media="screen"/>
+    <link rel="stylesheet" type="text/css" href="../static/css/table.css" media="screen"/>
+</head>
+
+<div class="grid_3 widget-shadow">
+    <div class="panel-grids">
+        <div class="panel panel-primary">
+            <table id="workersTable" style="width:100%">
+                <tr>
+                    <th>WorkerID</th>
+                    <th>WebUI Address</th>
+                    <th>Cores</th>
+                    <th>Memory (MB)</th>
+                    <th>State</th>
+                    {{for id,(webuiaddress,cores,memory,state,host) in workers.iteritems():}}
+                </tr>
+                <td id="td1">{{=id}}</td>
+                <td>{{=webuiaddress}}</td>
+                <td>{{=cores}}</td>
+                <td>{{=memory}}</td>
+                <td>{{=state}}</td>
+                {{pass}}
+                <tr>
+                </tr>
+            </table>
+            <button><a href="{{=URL('cluster')}}">Refresh the table</a></button>
+        </div>
+    </div>
+</div>
+
+
+<div class="grid_3 widget-shadow">
+    <div class="panel-grids">
+        <div class="panel panel-primary">
+            <button type="button" class="btn btn-primary" onclick="location.href='{{=URL('clusterStart')}}'">Start
+                cluster
+            </button>
+            <button type="button" class="btn btn-primary" onclick="location.href='{{=URL('clusterKill')}}'">Stop
+                cluster
+            </button>
+        </div>
+    </div>
+</div>
+
+<body>
+
+<div class="progress1">
+    {{if 'listHosts' in globals():}}
+    {{for i,(server,status) in enumerate(listHosts.iteritems(),1):}}
+    {{if i == 1:}}
+    {{if status == "OK":}}
+    <div class="circle1 done">
+        {{else:}}
+        <div class="circle1">
+            {{pass}}
+            <span class="label1">{{=i}}</span>
+            <span class="title1">{{=server}}</span>
+        </div>
+        {{else:}}
+        <span class="bar done"></span>
+        {{if status == "OK":}}
+        <div class="circle1 done">
+            {{else:}}
+            <div class="circle1">
+                {{pass}}
+                <span class="label1">{{=i}}</span>
+                <span class="title1">{{=server}}</span>
+            </div>
+            {{pass}}
+            {{pass}}
+            {{pass}}
+
+        </div>
+</body>

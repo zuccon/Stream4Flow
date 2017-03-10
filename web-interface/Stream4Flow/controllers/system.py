@@ -14,7 +14,6 @@ from datetime import datetime
 from global_functions import escape,check_username
 
 
-
 # ----------------- Common Settings ------------------#
 
 
@@ -328,11 +327,20 @@ def get_applications():
 def applications():
     return dict(applications=get_applications())
 
+
+
 def startApplication():
 
     selectApplication = request.post_vars.get('application')
     selectMemory = request.post_vars.get('cores')
     selectCores = request.post_vars.get('cores')
+
+    #Testing purposes only
+    if "protocols_statistics" in selectApplication:
+        port=4050
+
+    if "traffic_profiles" in selectApplication:
+        port = 4051
 
     if (selectApplication == None or selectApplication == None or selectCores == None):
          alert_type2 = "danger"
@@ -341,7 +349,7 @@ def startApplication():
     else:
         alert_type2 = "success"
         alert_message = "Application " + selectApplication + " started!"
-        url = "http://10.16.31.211:3031/" +selectApplication + "/cores=" +str(selectCores) + "/memory=" + str(selectMemory)
+        url = "http://10.16.31.211:3031/" +selectApplication + "/cores=" +str(selectCores) + "/memory=" + str(selectMemory) +"/port="+str(port)
         data = requests.get(url).json
 
     running_apps_dict = get_applications()
@@ -380,9 +388,6 @@ def killApplication():
 
 # ----------------- Cluster ----------------------------#
 
-
-
-
 def cluster_info():
     workers_idct = {}
     try:
@@ -392,34 +397,74 @@ def cluster_info():
         workers_idct = {}
         for item in dataWorkers["workers"]:
             if item["state"] == "ALIVE":
-                workers_idct[item["id"]] = [item["webuiaddress"], item["cores"], item["memory"], item["state"]]
+                workers_idct[item["id"]] = [item["webuiaddress"], item["cores"], item["memory"], item["state"],item["host"]]
     except(ValueError, IOError):
         print "Cluster nebezi"
+
 
     return workers_idct
 
 def cluster():
-    return dict(workers=cluster_info())
+    listHosts = []
+    #My workers
+    allHosts = ["10.16.31.211","10.16.31.212","10.16.31.213","10.16.31.214","10.16.31.215"]
+
+    currentStatus={}
+    active_workers = cluster_info()
+
+    #Currently running workers
+    for id, (webuiaddress, cores, memory, state, host) in active_workers.iteritems():
+        listHosts.append(host)
+
+    #If there is at least 1 worker that means that the master is running
+    if len(listHosts) != 0:
+        listHosts.append("10.16.31.211")
+
+
+    for i, val in enumerate(allHosts):
+        if val in listHosts:
+            currentStatus[val]="OK"
+        else: currentStatus[val]="NOK"
+
+    return dict(workers=active_workers,listHosts=currentStatus)
 
 def clusterStart():
+
+    listHosts = []
+    #My workers
+    allHosts = ["10.16.31.211","10.16.31.212","10.16.31.213","10.16.31.214","10.16.31.215"]
+    currentStatus = {}
 
     url = "http://10.16.31.211:3031/cluster/start"
     responseCluster = urllib.urlopen(url)
     dataCluster = responseCluster.read()
 
-    if "Cluster was already running!" == dataCluster:
-        alert_type2="danger"
-
-    if "Cluster sucessfully started!" == dataCluster:
-        alert_type2 = "success"
+    alert_message2="Cluster started!"
+    alert_type2 = "success"
 
     active_workers = cluster_info()
+
+    # Currently running workers
+    for id, (webuiaddress, cores, memory, state, host) in active_workers.iteritems():
+        listHosts.append(host)
+
+    # If there is at least 1 worker that means that the master is running
+    if len(listHosts) != 0:
+        listHosts.append("10.16.31.211")
+
+    for i, val in enumerate(allHosts):
+        if val in listHosts:
+            currentStatus[val] = "OK"
+        else:
+            currentStatus[val] = "NOK"
+
 
     response.view = request.controller + '/cluster.html'
     return dict(
         alert_type2=alert_type2,
-        alert_message2=dataCluster,
-        workers=active_workers
+        alert_message2= alert_message2,
+        workers=active_workers,
+        listHosts=currentStatus,
     )
 
 
@@ -428,19 +473,37 @@ def clusterKill():
     responseCluster = urllib.urlopen(url)
     dataCluster = responseCluster.read()
 
-    if "Cluster was already not running!" == dataCluster:
-        alert_type2="danger"
-
-    if "Cluster sucessfully killed!" == dataCluster:
-        alert_type2 = "success"
+    alert_message2 = "Cluster stopped!"
+    alert_type2 = "success"
 
     active_workers = cluster_info()
+
+    ###
+    listHosts = []
+    # My workers
+    allHosts = ["10.16.31.211", "10.16.31.212", "10.16.31.213", "10.16.31.214", "10.16.31.215"]
+    currentStatus = {}
+
+    # Currently running workers
+    for id, (webuiaddress, cores, memory, state, host) in active_workers.iteritems():
+        listHosts.append(host)
+
+    # If there is at least 1 worker that means that the master is running
+    if len(listHosts) != 0:
+        listHosts.append("10.16.31.211")
+
+    for i, val in enumerate(allHosts):
+        if val in listHosts:
+            currentStatus[val] = "OK"
+        else:
+            currentStatus[val] = "NOK"
 
     response.view = request.controller + '/cluster.html'
     return dict(
         alert_type2=alert_type2,
-        alert_message2=dataCluster,
-        workers=active_workers
+        alert_message2= alert_message2,
+        workers=active_workers,
+        listHosts=currentStatus
     )
 
 

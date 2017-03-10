@@ -1,0 +1,73 @@
+*, *:after, *:before {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Open Sans";
+}
+
+
+/* Form Progress1 */
+.progress1 {
+  width: 1000px;
+  margin: 20px auto;
+  text-align: center;
+}
+.progress1 .circle1,
+.progress1 .bar {
+  display: inline-block;
+  background: #eee;
+  width: 40px; height: 40px;
+  border-radius: 40px;
+  border: 1px solid #d5d5da;
+}
+.progress1 .bar {
+  position: relative;
+  width: 80px;
+  height: 6px;
+  margin: 0 -5px 28px -5px;
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+}
+.progress1 .circle1 .label1 {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  border-radius: 32px;
+  margin-top: 3px;
+  color: #FFFFFF;
+  font-size: 17px;
+  background: #FF0000;
+}
+.progress1 .circle1 .title1 {
+  color: #FF0000;
+  font-size: 13px;
+  line-height: 30px;
+  margin-left: -5px;
+}
+
+/* Done / Active */
+.progress1 .bar.done,
+.progress1 .circle1.done {
+  background: #eee;
+}
+.progress1 .bar.active {
+  background: linear-gradient(to right, #EEE 40%, #FFF 60%);
+}
+.progress1 .circle1.done .label1 {
+  color: #FFF;
+  background: #8bc435;
+  box-shadow: inset 0 0 2px rgba(0,0,0,.2);
+}
+.progress1 .circle1.done .title1 {
+  color: #8bc435;
+}
+.progress1 .circle1.active .label1 {
+  color: #FF0000;
+  background: #0c95be;
+  box-shadow: inset 0 0 2px rgba(0,0,0,.2);
+}
+.progress1 .circle1.active .title1 {
+  color: #0c95be;
+}
