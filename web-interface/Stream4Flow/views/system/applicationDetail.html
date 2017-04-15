@@ -1,0 +1,174 @@
+{{extend 'layout.html'}}
+
+<script>
+    // Set correct menu view.
+    $('#menu-about').addClass('active');
+
+</script>
+
+<head>
+    <link href="{{=URL('static','css/test.css')}}" rel="stylesheet" type="text/css" media="all">
+    <link rel="stylesheet" type="text/css" href="../static/css/table.css" media="screen"/>
+    <script src= "https://cdn.zingchart.com/zingchart.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="../static/css/graph.css" media="screen"/>
+		<script> zingchart.MODULESDIR = "https://cdn.zingchart.com/modules/";
+		ZC.LICENSE = ["569d52cefae586f634c54f86dc99e6a9","ee6b7db5b51705a13dc2339db3edaf6d"];
+        </script>
+
+</head>
+
+<body>
+{{if 'json' in globals():}}
+<div class="alert alert-{{=json}}" role="alert">
+    {{=json}}
+</div>
+{{pass}}
+
+<h3 class="title1">Applications</h3>
+
+<div class="grid_3 widget-shadow">
+    <div class="panel-grids">
+
+            <div class="panel-heading">
+                <h3 class="panel-title">Running Applications </h3>
+
+                <table id="runningAppTable" style="width:100%">
+                    <tr>
+                        <th>Application id</th>
+                        <th>Application name</th>
+                        <th>Cores</th>
+                        <th>Memory</th>
+                        <th>Running time(hours)</th>
+                        <th>Total Records</th>
+                        <th>Average Records</th>
+                        <th>Port</th>
+                        <th>Kill</th>
+                        {{for appid,(name,timeInHours,totalRecords,averageRecords,cores,memory,port) in applications.iteritems():}}
+                        {{if port == applicationWanted:}}
+                                </tr>
+                                <form action="killApplication" method="post">
+                                <td id="td1" name="td1">{{=appid}}</td>
+                                <td>{{=name}}</td>
+                                <td>{{=cores}}</td>
+                                <td>{{=memory}}</td>
+                                <td>{{=timeInHours}}</td>
+                                <td>{{=totalRecords}}</td>
+                                <td>{{=averageRecords}}</td>
+                                <td>{{=port}}</td>
+                                <td class="actions">
+                                    <form action="killApplication" method="post">
+                                                            <input type="hidden" name="appport" value="{{=port}}">
+                                                            <button type="submit" class="btn btn-primary">Kill</button>
+                                     </form>
+                                </form>
+                    {{pass}}
+                    {{pass}}
+                    <tr>
+                    </tr>
+                </table>
+            </div>
+            <div class="panel panel-primary">
+            </div>
+        <form action="applicationDetail" method="post">
+                    <td class="actions">
+                        <form action="applicationDetail" method="post">
+                                                <input type="hidden" name="appport" value="{{=port}}">
+                                                <button type="submit" class="btn btn-primary">Refresh</button>
+                         </form>
+    </div>
+    <div class="clearfix"></div>
+</div>
+
+<div class="panel-info widget-shadow general chart-protocols-statistics">
+    <h4 class="title2">Statistics Charts</h4>
+	<div id="myChart"></div>
+
+    </div>
+
+    <div class="clearfix"> </div>
+</div>
+
+      <script type="text/javascript">
+    var portA = {{=applicationWanted}}
+
+function generateChart(timestamp){
+    var all = timestamp
+    var json = all
+    var myConfig = {
+    type:"line",
+    title: {
+      text:"Application Details"
+    },
+    "subtitle":{
+        "text":"Displays the number of records in particular time."
+      },
+     scaleX:{
+     "label": {
+      "text": "Timeline"
+     },
+     step: '5minute', //set step for scale,
+     itemsOverlap: true,
+     zooming: true,
+     transform:{
+      type: 'date',
+      all: '%m/%d/%Y<br>%h:%i:%s:%q %A'
+     },
+      "max-items":5
+    },
+    scaleY:{
+      "label": {
+      "text": "# Events"
+      },
+    },
+    "plotarea": {
+       "margin-left": "dynamic",
+       "margin-bottom": "dynamic"
+     },
+    "csv":{
+            "title":"value:",
+            "row-separator":";",
+            "separator":",",
+            "vertical-labels":1,
+            "keyval-format":true,
+            "data-string":json
+        }
+}
+
+zingchart.render({
+	id : 'myChart',
+	data : myConfig,
+	height: '60%',
+	width: '100%'
+});
+};
+
+function loadChart(){
+    $.ajax({
+        async: true,
+        type: 'GET',
+        url: "/system/get-statistics"+ '?port='+portA,
+        success: function(raw) {
+            var response = JSON.parse(raw);
+            generateChart(response.data);
+
+        }
+    });
+
+};
+
+
+function loadAllCharts() {
+    loadChart();
+};
+
+// Load all charts when page loaded
+$(window).load(loadAllCharts());
+
+// Reflow highchart after the panel is selected
+$('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+    var target = $(e.target).attr("href") + " .highchart";
+    $(target).highcharts().reflow();
+});
+    </script>
+
+</body>

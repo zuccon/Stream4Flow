@@ -7,11 +7,15 @@
 
 <h3 class="title1">Protocols Statistics</h3>
 
-{{if not session.logged:}}
-<div class="alert alert-danger" role="alert">
-   <strong>Error: </strong>You must be logged to view this page!
-</div>
-{{else:}}
+<head>
+    <link rel="stylesheet" type="text/css" href="../static/css/table.css" media="screen"/>
+    <script src= "https://cdn.zingchart.com/zingchart.min.js"></script>
+        <link rel="stylesheet" type="text/css" href="../static/css/graph.css" media="screen"/>
+		<script> zingchart.MODULESDIR = "https://cdn.zingchart.com/modules/";
+		ZC.LICENSE = ["569d52cefae586f634c54f86dc99e6a9","ee6b7db5b51705a13dc2339db3edaf6d"];
+        </script>
+
+</head>
 
 {{if ('alert_type' in globals()) and alert_type != "":}}
 <div class="alert alert-{{=alert_type}}" role="alert">

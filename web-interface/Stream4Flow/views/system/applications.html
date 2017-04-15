@@ -1,0 +1,160 @@
+{{extend 'layout.html'}}
+
+<script>
+    // Set correct menu view.
+    $('#menu-about').addClass('active');
+
+</script>
+
+<meta http-equiv="refresh" content="60" />
+
+<head>
+    <link href="{{=URL('static','css/test.css')}}" rel="stylesheet" type="text/css" media="all">
+    <link rel="stylesheet" type="text/css" href="../static/css/table.css" media="screen"/>
+</head>
+
+
+{{if 'alert_type2' in globals():}}
+<div class="alert alert-{{=alert_type2}}" role="alert">
+    <strong>
+        {{if alert_type2 == "danger":}}Error:
+        {{elif alert_type2 == "success":}}Success:
+        {{elif alert_type2 == "info":}}Info:
+        {{elif alert_type2 == "warning":}}Warning:
+        {{pass}}
+    </strong>{{=alert_message2}}
+</div>
+{{pass}}
+
+
+<h3 class="title1">Applications</h3>
+
+
+<div class="grid_3 widget-shadow">
+    <div class="panel-grids">
+
+            <div class="panel-heading">
+                <h3 class="panel-title">Running Applications </h3>
+
+                <table id="runningAppTable" style="width:100%">
+                    <tr>
+                        <th>Application id</th>
+                        <th>Application name</th>
+                        <th>Cores</th>
+                        <th>Memory</th>
+                        <th>Running time(hours)</th>
+                        <th>Total Records</th>
+                        <th>Average Records</th>
+                        <th>Port</th>
+                        <th>Kill</th>
+                        <th>Check the application</th>
+                        {{for appid,(name,timeInHours,totalRecords,averageRecords,cores,memory,port) in applications.iteritems():}}
+                    </tr>
+                    <td>{{=appid}}</td>
+                    <td>{{=name}}</a></td>
+                    <td>{{=cores}}</td>
+                    <td>{{=memory}}</td>
+                    <td>{{=timeInHours}}</td>
+                    <td>{{=totalRecords}}</td>
+                    <td>{{=averageRecords}}</td>
+                    <td>{{=port}}</td>
+                    <form action="killApplication" method="post">
+                    <td class="actions">
+                        <form action="killApplication" method="post">
+                                                <input type="hidden" name="appport" value="{{=port}}">
+                                                <button type="submit" class="btn btn-primary">Kill</button>
+                         </form>
+
+                    </form>
+                    <form action="applicationDetail" method="post">
+                    <td class="actions">
+                        <form action="applicationDetail" method="post">
+                                                <input type="hidden" name="appport" value="{{=port}}">
+                                                <button type="submit" class="btn btn-primary">Check</button>
+                         </form>
+
+                    </form>
+                    {{pass}}
+                    <tr>
+                    </tr>
+                </table>
+
+
+            </div>
+            <div class="panel panel-primary">
+
+            </div>
+        <button><a href="{{=URL('applications')}}">Refresh the table</a></button>
+
+    </div>
+    <div class="clearfix"></div>
+</div>
+
+
+
+
+<form action="startApplication" method="post">
+<div class="grid_3 widget-shadow">
+    <div class="panel-grids">
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">Application Control </h3>
+            </div>
+            <div class="panel panel-primary">
+                <div class="grid_3 widget-shadow">
+                    <div class="panel-grids">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">
+
+                                <h3 class="panel-title">Start Application </h3>
+                            </div>
+                            <div class="panel panel-primary">
+
+                                <div class="row">
+                                    <div class="col-xs-5">
+                                        <h4>Select the application</h4>
+                                        <select name="application">
+
+                                            <option value="protocols_statistics">Protocols Statistics</option>
+                                            <option value="traffic-profiles">Traffic Profiles</option>
+
+
+                                        </select>
+                                    </div>
+                                    <div class="col-xs-2">
+                                        <h4>Memory</h4>
+                                        <select name="memory">
+                                            {{for x in range(0, 5):}}
+                                            <option value="{{=x}}">{{=x}}</option>
+                                            {{pass}}
+                                        </select>
+                                    </div>
+                                    <div class="col-xs-2">
+                                        <h4>Cores</h4>
+                                        <select name="cores">
+                                            {{for x in range(0, 5):}}
+                                            <option value="{{=x}}">{{=x}}</option>
+                                            {{pass}}
+                                        </select>
+                                    </div>
+
+                                    <div class="col-xs-2">
+                                        <h4>Port</h4>
+                                        <select name="port">
+                                            {{for x in range(4050, 4060):}}
+                                            <option value="{{=x}}">{{=x}}</option>
+                                            {{pass}}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" >Start application</button>
+                        </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+</form>

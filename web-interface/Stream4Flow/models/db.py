@@ -9,11 +9,12 @@
 # -------------------------------------------------------------------------
 # app configuration made easy. Look inside private/appconfig.ini
 # -------------------------------------------------------------------------
-from gluon.contrib.appconfig import AppConfig
+from appconfig import AppConfig
 
 # -------------------------------------------------------------------------
 # once in production, remove reload=True to gain full speed
 # -------------------------------------------------------------------------
+
 myconf = AppConfig(reload=True)
 
 # ---------------------------------------------------------------------
@@ -79,6 +80,22 @@ db.define_table('users_auth',
 db.define_table('users_logins',
                 Field('user_id', 'integer', required=True, notnull=True, unique=True),
                 Field('last_login', 'datetime', required=True, notnull=True))
+
+db.define_table('applications',
+                Field('application_id', 'string', required=True, notnull=True,unique=True),
+                Field('application_name', 'string', required=True, notnull=True),
+                Field('application_cores', 'integer', required=True, notnull=True),
+                Field('application_memory', 'integer', required=True, notnull=True),
+                Field('application_port', 'integer', required=True, notnull=True),
+                )
+
+db.define_table('performance',
+                Field('application_id', 'string', required=True, notnull=True),
+                Field('application_timestamp', 'datetime', required=True, notnull=True),
+                Field('application_running_time', 'double', required=True, notnull=True),
+                Field('application_records', 'integer', required=True, notnull=True),
+                Field('application_average_records', 'double', required=True, notnull=True),
+                )
 
 # -------------------------------------------------------------------------
 # after defining tables, uncomment below to enable auditing

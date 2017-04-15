@@ -6,13 +6,18 @@ import hashlib
 import random
 import time
 
+import re
+import sys
+from time import sleep
+from datetime import datetime
+import time
+
 import json, requests, urllib
 # Enable to get current datetime
 import os, subprocess
-from datetime import datetime
+
 # Import global functions
 from global_functions import escape,check_username
-
 
 # ----------------- Common Settings ------------------#
 
@@ -281,11 +286,12 @@ def about():
 #Get all applications
 
 def get_applications():
-
     my_dict = {}
     final_dict = {}
+
+
     try:
-        r = requests.get('http://10.16.31.211:8080/json/')
+        r = requests.get('http://10.16.31.210:8080/json/')
         r.encoding = 'UTF-8'
         data = r.json()
 
@@ -299,9 +305,12 @@ def get_applications():
             alert_message2="The cluster is not running!",
             applications=final_dict)
 
-    for x in range(0, 2):
+    if not applications_idct:
+        return final_dict
+
+    for row in db().select(db.applications.application_id):
         try:
-            s = requests.get('http://10.16.31.211:405' + str(x) + '/metrics/json/')
+            s = requests.get('http://10.16.31.210:' + str(row.application_id) + '/metrics/json/')
             s.encoding = 'UTF-8'
             records = s.json()
             for key, values in records.iteritems():
@@ -314,6 +323,9 @@ def get_applications():
         except (ValueError, IOError):
             continue
 
+    if not my_dict:
+        return final_dict
+
     for id, (state, name, duration, cores, memory) in applications_idct.items():
         if state == "RUNNING":
             for appid, records in my_dict.items():
@@ -321,36 +333,75 @@ def get_applications():
                     runningTime = duration / 3600000
                     averageRPS = records / (duration / 1000)
                     timeInHours = str(round(runningTime, 2))
-                    final_dict[id] = [name, timeInHours, records, averageRPS, cores, memory]
+
+                    now = datetime.now()
+
+                    port = db(db.applications.application_name == id).select(db.applications.application_port)[0].application_port
+                    #add the difference in records
+                    try:
+                        lastValue = db(db.performance.application_id == port).select(db.performance.application_timestamp,db.performance.application_records).sort(lambda row: row.application_timestamp, reverse=True)[0].application_records
+                        if lastValue is None:
+                           difference=0
+                        else:
+                           difference = records - lastValue
+                    except(IndexError):
+                        difference = 0
+
+                    db.performance.insert(application_id=port,application_timestamp=now,
+                                          application_running_time=runningTime,application_records=records,
+                                          application_average_records=difference)
+                    final_dict[id] = [name, timeInHours, records, averageRPS, cores, memory,str(port)]
+
     return final_dict
 
 def applications():
     return dict(applications=get_applications())
 
+def applicationDetail():
 
+    chosenApplication = request.post_vars.get('appport')
+
+    return dict(applications=get_applications(),applicationWanted=str(chosenApplication))
+
+#Prepares the data for highchart graph
+def get_statistics():
+    port = escape(request.get_vars.port)
+    data = ""
+
+    for row in db(db.performance.application_id == port).select(db.performance.application_average_records, db.performance.application_timestamp):
+        timestampFinal = int(time.mktime(time.strptime(str(row.application_timestamp), '%Y-%m-%d %H:%M:%S'))) * 1000
+        data += str(timestampFinal) + "," + str(row.application_average_records) + ";"
+
+    json_response = '{"data": "' + data + '"}'
+
+    return json_response
 
 def startApplication():
 
     selectApplication = request.post_vars.get('application')
     selectMemory = request.post_vars.get('cores')
     selectCores = request.post_vars.get('cores')
-
-    #Testing purposes only
-    if "protocols_statistics" in selectApplication:
-        port=4050
-
-    if "traffic_profiles" in selectApplication:
-        port = 4051
-
+    selectPort = request.post_vars.get('port')
     if (selectApplication == None or selectApplication == None or selectCores == None):
          alert_type2 = "danger"
          alert_message = "Missing some parameter"
 
     else:
-        alert_type2 = "success"
-        alert_message = "Application " + selectApplication + " started!"
-        url = "http://10.16.31.211:3031/" +selectApplication + "/cores=" +str(selectCores) + "/memory=" + str(selectMemory) +"/port="+str(port)
-        data = requests.get(url).json
+
+            if db(db.applications.application_port == selectPort).count() != 0:
+                alert_type2 = "danger"
+                alert_message = "This port is already busy!"
+
+            else:
+                alert_type2 = "success"
+                alert_message = "Application " + selectApplication + " started!"
+                url = "http://10.16.31.210:3031/" +selectApplication + "/cores=" +str(selectCores) + "/memory=" + str(selectMemory) +"/port="+str(selectPort)
+                data = requests.get(url).json
+
+    app_id= getAppID(str(selectPort))
+
+    db.applications.insert(application_id=selectPort, application_name=app_id, application_cores=selectCores,
+                           application_memory=selectMemory, application_port=selectPort)
 
     running_apps_dict = get_applications()
 
@@ -361,21 +412,35 @@ def startApplication():
             applications=running_apps_dict
         )
 
+def getAppID(port):
+        sleep(10)
+        url = "http://10.16.31.210:"+port+"/metrics/json/"
+        s = requests.get(url)
+        s.encoding = 'UTF-8'
+        records = s.json()
+        myre = '^(app-\d*-\d*).driver.\w+'
+
+        for key, values in records.iteritems():
+            if key == "gauges":
+                for keygauge, valgauge in values.iteritems():
+                    application_ID = values.keys()[0]
+                    if re.search(myre, values.keys()[0]):
+                        application_ID = re.search(myre, values.keys()[0]).group(1)
+
+
+
+        return application_ID
+
+
 def killApplication():
+    selectPort = request.post_vars.get('appport')
+    db(db.applications.application_port == selectPort).delete()
+    db(db.performance.application_id == selectPort).delete()
+    url = "http://10.16.31.210:3031/application/kill/port= "+selectPort
+    requests.get(url)
+    alert_type2 = "success"
 
-    selectApplication = request.post_vars.get('appname')
-    if "protocols_statistics" in selectApplication:
-
-        requests.get('http://10.16.31.211:3031/protocols_statistics/kill')
-        alert_type2 = "success"
-
-
-    if "traffic-profiles.py" in selectApplication:
-            requests.get('http://10.16.31.211:3031/traffic_profiles/kill')
-            alert_type2 = "success"
-
-
-    alert_message = "Application " + selectApplication + " killed!"
+    alert_message = "Application " + selectPort + " killed!"
 
     running_apps_dict = get_applications()
 
@@ -391,7 +456,7 @@ def killApplication():
 def cluster_info():
     workers_idct = {}
     try:
-        urlWorkers = 'http://10.16.31.211:8080/json/'
+        urlWorkers = 'http://10.16.31.210:8080/json/'
         responseWorkers = urllib.urlopen(urlWorkers)
         dataWorkers = json.loads(responseWorkers.read())
         workers_idct = {}
@@ -407,7 +472,7 @@ def cluster_info():
 def cluster():
     listHosts = []
     #My workers
-    allHosts = ["10.16.31.211","10.16.31.212","10.16.31.213","10.16.31.214","10.16.31.215"]
+    allHosts = ["10.16.31.210","10.16.31.212","10.16.31.213","10.16.31.214","10.16.31.211"]
 
     currentStatus={}
     active_workers = cluster_info()
@@ -418,7 +483,7 @@ def cluster():
 
     #If there is at least 1 worker that means that the master is running
     if len(listHosts) != 0:
-        listHosts.append("10.16.31.211")
+        listHosts.append("10.16.31.210")
 
 
     for i, val in enumerate(allHosts):
@@ -432,10 +497,10 @@ def clusterStart():
 
     listHosts = []
     #My workers
-    allHosts = ["10.16.31.211","10.16.31.212","10.16.31.213","10.16.31.214","10.16.31.215"]
+    allHosts = ["10.16.31.210","10.16.31.212","10.16.31.213","10.16.31.214","10.16.31.211"]
     currentStatus = {}
 
-    url = "http://10.16.31.211:3031/cluster/start"
+    url = "http://10.16.31.210:3031/cluster/start"
     responseCluster = urllib.urlopen(url)
     dataCluster = responseCluster.read()
 
@@ -450,7 +515,7 @@ def clusterStart():
 
     # If there is at least 1 worker that means that the master is running
     if len(listHosts) != 0:
-        listHosts.append("10.16.31.211")
+        listHosts.append("10.16.31.210")
 
     for i, val in enumerate(allHosts):
         if val in listHosts:
@@ -469,7 +534,7 @@ def clusterStart():
 
 
 def clusterKill():
-    url = "http://10.16.31.211:3031/cluster/kill"
+    url = "http://10.16.31.210:3031/cluster/stop"
     responseCluster = urllib.urlopen(url)
     dataCluster = responseCluster.read()
 
@@ -481,7 +546,7 @@ def clusterKill():
     ###
     listHosts = []
     # My workers
-    allHosts = ["10.16.31.211", "10.16.31.212", "10.16.31.213", "10.16.31.214", "10.16.31.215"]
+    allHosts = ["10.16.31.210", "10.16.31.212", "10.16.31.213", "10.16.31.214", "10.16.31.211"]
     currentStatus = {}
 
     # Currently running workers
@@ -490,7 +555,7 @@ def clusterKill():
 
     # If there is at least 1 worker that means that the master is running
     if len(listHosts) != 0:
-        listHosts.append("10.16.31.211")
+        listHosts.append("10.16.31.210")
 
     for i, val in enumerate(allHosts):
         if val in listHosts:
@@ -505,7 +570,6 @@ def clusterKill():
         workers=active_workers,
         listHosts=currentStatus
     )
-
 
 
 
