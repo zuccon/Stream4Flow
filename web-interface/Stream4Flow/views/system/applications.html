@@ -111,16 +111,19 @@
                             <div class="panel panel-primary">
 
                                 <div class="row">
-                                    <div class="col-xs-5">
-                                        <h4>Select the application</h4>
+
+                                    <div class="col-xs-5" >
+                                        <h4>Select Application</h4>
                                         <select name="application">
 
-                                            <option value="protocols_statistics">Protocols Statistics</option>
-                                            <option value="traffic-profiles">Traffic Profiles</option>
+                                            {{for i,(app_name) in enumerate(applicationsAvailable,1):}}
+                                            <option value="protocols_statistics">{{=app_name}}</option>
 
-
+                                            {{pass}}
                                         </select>
                                     </div>
+                                </div>
+                                <div class="row">
                                     <div class="col-xs-2">
                                         <h4>Memory</h4>
                                         <select name="memory">
@@ -146,6 +149,7 @@
                                             {{pass}}
                                         </select>
                                     </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -157,4 +161,25 @@
         </div>
     </div>
 </div>
+</form>
+
+<form action="addApplication" method="post">
+    New Application: <br>
+        <input type="text" name="newApplication">
+    </br>
+    <button type="submit" class="btn btn-primary" >Add new application</button>
+</form>
+
+
+<form action="deleteApplication" method="post">
+    Delete Application: <br>
+    <select name="deleteApplication">
+        {{for i,(app_name) in enumerate(applicationsAvailable,1):}}
+             <option >{{=app_name}}
+             </option>
+
+       {{pass}}
+    </select>
+    </br>
+    <button type="submit" class="btn btn-primary" >Delete application</button>
 </form>

@@ -58,7 +58,7 @@ def add_user():
 
     # Check mandatory inputs
     if not (
-                                    request.post_vars.username and request.post_vars.name and request.post_vars.organization and request.post_vars.email and
+                        request.post_vars.username and request.post_vars.name and request.post_vars.organization and request.post_vars.email and
                         request.post_vars.role and request.post_vars.password and request.post_vars.password_confirm):
         alert_type = "danger"
         alert_message = "Some mandatory input is missing!"
@@ -355,7 +355,7 @@ def get_applications():
     return final_dict
 
 def applications():
-    return dict(applications=get_applications())
+    return dict(applications=get_applications(),applicationsAvailable=currentlyAvailableApps())
 
 def applicationDetail():
 
@@ -379,7 +379,7 @@ def get_statistics():
 def startApplication():
 
     selectApplication = request.post_vars.get('application')
-    selectMemory = request.post_vars.get('cores')
+    selectMemory = request.post_vars.get('memory')
     selectCores = request.post_vars.get('cores')
     selectPort = request.post_vars.get('port')
     if (selectApplication == None or selectApplication == None or selectCores == None):
@@ -395,7 +395,10 @@ def startApplication():
             else:
                 alert_type2 = "success"
                 alert_message = "Application " + selectApplication + " started!"
-                url = "http://10.16.31.210:3031/" +selectApplication + "/cores=" +str(selectCores) + "/memory=" + str(selectMemory) +"/port="+str(selectPort)
+                application="/home/spark/applications/protocols-statistics/protocols_statistics.py"
+  #             url = "http://10.16.31.210:3031/" +selectApplication + "/cores=" +str(selectCores) + "/memory=" + str(selectMemory) +"/port="+str(selectPort)
+                url = "http://10.16.31.210:3031/run-application/application=" + application + "/cores=" + str(selectCores) + "/memory=" + str(selectMemory) + "/port=" + str(selectPort)
+     # http://10.16.31.210:3031/run-application/application=/home/spark/applications/protocols-statistics/protocols_statistics.py/cores=4/memory=2/port=4057
                 data = requests.get(url).json
 
     app_id= getAppID(str(selectPort))
@@ -409,7 +412,9 @@ def startApplication():
     return dict(
             alert_type2=alert_type2,
             alert_message2=alert_message,
-            applications=running_apps_dict
+            applications=running_apps_dict,
+            applicationsAvailable=currentlyAvailableApps()
+
         )
 
 def getAppID(port):
@@ -443,13 +448,48 @@ def killApplication():
     alert_message = "Application " + selectPort + " killed!"
 
     running_apps_dict = get_applications()
-
     response.view = request.controller + '/applications.html'
     return dict(
         alert_type2=alert_type2,
         alert_message2=alert_message,
-        applications=running_apps_dict
+        applications=running_apps_dict,
+        applicationsAvailable=currentlyAvailableApps()
     )
+
+def currentlyAvailableApps():
+    applicationsAvailable = []
+    for row in db().select(db.applications_available.application_name):
+        applicationsAvailable.append(row.application_name)
+    return applicationsAvailable
+
+def addApplication():
+
+    addedApplication = request.post_vars.get('newApplication')
+
+    #check
+    if not addedApplication:
+        alert_type2 = "danger"
+        alert_message2 = "No application selected!"
+    elif db(db.applications_available.application_name == addedApplication).count() != 0:
+        alert_type2 = "danger"
+        alert_message2 = "This application already exist!"
+    else:
+        db.applications_available.insert(id="", application_name=addedApplication)
+        alert_type2 = "success"
+        alert_message2 = "Application " + addedApplication + " added to the DB."
+
+    response.view = request.controller + '/applications.html'
+    return dict(applications=get_applications(), applicationsAvailable=currentlyAvailableApps(),alert_type2=alert_type2,alert_message2=alert_message2)
+
+
+def deleteApplication():
+    deleteApplication = request.post_vars.get('deleteApplication')
+    alert_type2 = "success"
+    alert_message2 = "OK!"
+    db(db.applications_available.application_name == deleteApplication).delete()
+    response.view = request.controller + '/applications.html'
+    return dict(applications=get_applications(), applicationsAvailable=currentlyAvailableApps(), alert_type2=alert_type2, alert_message2=deleteApplication)
+
 
 # ----------------- Cluster ----------------------------#
 
