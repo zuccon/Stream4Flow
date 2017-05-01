@@ -8,7 +8,7 @@
 
 
 
-<meta http-equiv="refresh" content="10" />
+<meta http-equiv="refresh" content="10,url=cluster">
 
 <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-
@@ -42,8 +42,11 @@ ui.min.js"></script>
     </strong>{{=alert_message2}}
 
 </div>
-{{pass}}
 
+{{pass}}
+{{if 'signal' in globals():}}
+    <meta http-equiv="refresh" content="2,url=cluster"/>
+{{pass}}
 
 <head>
     <link rel="stylesheet" type="text/css" href="../static/css/progressCluster.css" media="screen"/>
@@ -119,4 +122,7 @@ ui.min.js"></script>
             {{pass}}
 
         </div>
+
+
+
 </body>

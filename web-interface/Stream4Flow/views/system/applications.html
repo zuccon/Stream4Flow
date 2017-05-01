@@ -6,16 +6,35 @@
 
 </script>
 
-<meta http-equiv="refresh" content="60" />
+<meta http-equiv="refresh" content="20" />
 
 <head>
     <link href="{{=URL('static','css/test.css')}}" rel="stylesheet" type="text/css" media="all">
     <link rel="stylesheet" type="text/css" href="../static/css/table.css" media="screen"/>
 </head>
 
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.18/jquery-
+
+ui.min.js"></script>
+
+<script type="text/javascript">
+
+ $(document).ready(function() {
+    $("#testDiv").dialog({
+        height: 140,
+        modal: true,
+        open: function(event, ui){
+           setTimeout("$('#testDiv').dialog('close')",2000);
+        }
+    });
+ });
+
+</script>
 
 {{if 'alert_type2' in globals():}}
-<div class="alert alert-{{=alert_type2}}" role="alert">
+<div class="alert alert-{{=alert_type2}}" id="testDiv" role="alert">
+
     <strong>
         {{if alert_type2 == "danger":}}Error:
         {{elif alert_type2 == "success":}}Success:
@@ -23,7 +42,12 @@
         {{elif alert_type2 == "warning":}}Warning:
         {{pass}}
     </strong>{{=alert_message2}}
+
 </div>
+{{pass}}
+
+{{if 'signal' in globals():}}
+    <meta http-equiv="refresh" content="2,url=applications"/>
 {{pass}}
 
 
@@ -127,7 +151,7 @@
                                     <div class="col-xs-2">
                                         <h4>Memory</h4>
                                         <select name="memory">
-                                            {{for x in range(0, 5):}}
+                                            {{for x in range(1, 6):}}
                                             <option value="{{=x}}">{{=x}}</option>
                                             {{pass}}
                                         </select>
@@ -135,7 +159,7 @@
                                     <div class="col-xs-2">
                                         <h4>Cores</h4>
                                         <select name="cores">
-                                            {{for x in range(0, 5):}}
+                                            {{for x in range(1, 6):}}
                                             <option value="{{=x}}">{{=x}}</option>
                                             {{pass}}
                                         </select>

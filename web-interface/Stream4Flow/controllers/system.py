@@ -413,7 +413,8 @@ def startApplication():
             alert_type2=alert_type2,
             alert_message2=alert_message,
             applications=running_apps_dict,
-            applicationsAvailable=currentlyAvailableApps()
+            applicationsAvailable=currentlyAvailableApps(),
+            signal=""
 
         )
 
@@ -453,7 +454,8 @@ def killApplication():
         alert_type2=alert_type2,
         alert_message2=alert_message,
         applications=running_apps_dict,
-        applicationsAvailable=currentlyAvailableApps()
+        applicationsAvailable=currentlyAvailableApps(),
+        signal=""
     )
 
 def currentlyAvailableApps():
@@ -479,7 +481,7 @@ def addApplication():
         alert_message2 = "Application " + addedApplication + " added to the DB."
 
     response.view = request.controller + '/applications.html'
-    return dict(applications=get_applications(), applicationsAvailable=currentlyAvailableApps(),alert_type2=alert_type2,alert_message2=alert_message2)
+    return dict(applications=get_applications(), applicationsAvailable=currentlyAvailableApps(),alert_type2=alert_type2,alert_message2=alert_message2,signal="")
 
 
 def deleteApplication():
@@ -488,7 +490,7 @@ def deleteApplication():
     alert_message2 = "OK!"
     db(db.applications_available.application_name == deleteApplication).delete()
     response.view = request.controller + '/applications.html'
-    return dict(applications=get_applications(), applicationsAvailable=currentlyAvailableApps(), alert_type2=alert_type2, alert_message2=deleteApplication)
+    return dict(applications=get_applications(), applicationsAvailable=currentlyAvailableApps(), alert_type2=alert_type2, alert_message2=deleteApplication,signal="")
 
 
 # ----------------- Cluster ----------------------------#
@@ -531,6 +533,9 @@ def cluster():
             currentStatus[val]="OK"
         else: currentStatus[val]="NOK"
 
+
+
+
     return dict(workers=active_workers,listHosts=currentStatus)
 
 def clusterStart():
@@ -544,8 +549,14 @@ def clusterStart():
     responseCluster = urllib.urlopen(url)
     dataCluster = responseCluster.read()
 
-    alert_message2="Cluster started!"
-    alert_type2 = "success"
+
+    if (dataCluster.count("Stop") == 0):
+        alert_message2 = "The cluster was succesfully started!"
+        alert_type2 = "success"
+    else:
+        alert_message2 = "The cluster was already running!"
+        alert_type2 = "danger"
+
 
     active_workers = cluster_info()
 
@@ -570,16 +581,21 @@ def clusterStart():
         alert_message2= alert_message2,
         workers=active_workers,
         listHosts=currentStatus,
+        signal=""
     )
-
 
 def clusterKill():
     url = "http://10.16.31.210:3031/cluster/stop"
     responseCluster = urllib.urlopen(url)
     dataCluster = responseCluster.read()
 
-    alert_message2 = "Cluster stopped!"
-    alert_type2 = "success"
+    if "no org.apache.spark.deploy.master.Master to stop" in dataCluster:
+        alert_message2 = "Cluster was already not running!"
+        alert_type2 = "danger"
+    else:
+        alert_message2 = "Cluster succesfully stopped!"
+        alert_type2 = "success"
+
 
     active_workers = cluster_info()
 
@@ -608,7 +624,8 @@ def clusterKill():
         alert_type2=alert_type2,
         alert_message2= alert_message2,
         workers=active_workers,
-        listHosts=currentStatus
+        listHosts=currentStatus,
+        signal=""
     )
 
 
