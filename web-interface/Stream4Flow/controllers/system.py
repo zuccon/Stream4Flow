@@ -367,10 +367,13 @@ def applicationDetail():
 def get_statistics():
     port = escape(request.get_vars.port)
     data = ""
+    nowMillis = int(round(time.time() * 1000))
 
     for row in db(db.performance.application_id == port).select(db.performance.application_average_records, db.performance.application_timestamp):
         timestampFinal = int(time.mktime(time.strptime(str(row.application_timestamp), '%Y-%m-%d %H:%M:%S'))) * 1000
-        data += str(timestampFinal) + "," + str(row.application_average_records) + ";"
+        #Only data younger than 2 hours
+        if (nowMillis - timestampFinal < 7200000):
+            data += str(timestampFinal) + "," + str(row.application_average_records) + ";"
 
     json_response = '{"data": "' + data + '"}'
 
@@ -382,6 +385,7 @@ def startApplication():
     selectMemory = request.post_vars.get('memory')
     selectCores = request.post_vars.get('cores')
     selectPort = request.post_vars.get('port')
+    zookeeperSettings =  request.post_vars.get('zookeeper')
     if (selectApplication == None or selectApplication == None or selectCores == None):
          alert_type2 = "danger"
          alert_message = "Missing some parameter"
@@ -397,8 +401,8 @@ def startApplication():
                 alert_message = "Application " + selectApplication + " started!"
                 application="/home/spark/applications/protocols-statistics/protocols_statistics.py"
   #             url = "http://10.16.31.210:3031/" +selectApplication + "/cores=" +str(selectCores) + "/memory=" + str(selectMemory) +"/port="+str(selectPort)
-                url = "http://10.16.31.210:3031/run-application/application=" + application + "/cores=" + str(selectCores) + "/memory=" + str(selectMemory) + "/port=" + str(selectPort)
-     # http://10.16.31.210:3031/run-application/application=/home/spark/applications/protocols-statistics/protocols_statistics.py/cores=4/memory=2/port=4057
+                url = "http://10.16.31.210:3031/run-application/application=" + application + "/cores=" + str(selectCores) + "/memory=" + str(selectMemory) + "/port=" + str(selectPort) + "/zookeeper=" + zookeeperSettings
+     # http://10.16.31.210:3031/run-application/application=/home/spark/applications/protocols-statistics/protocols_statistics.py/cores=4/memory=2/port=4057/zookeeper=-iz producer:2181 -it ipfix.entry -oh consumer:20101
                 data = requests.get(url).json
 
     app_id= getAppID(str(selectPort))
@@ -411,7 +415,7 @@ def startApplication():
     response.view = request.controller + '/applications.html'
     return dict(
             alert_type2=alert_type2,
-            alert_message2=alert_message,
+            alert_message2=zookeeperSettings,
             applications=running_apps_dict,
             applicationsAvailable=currentlyAvailableApps(),
             signal=""

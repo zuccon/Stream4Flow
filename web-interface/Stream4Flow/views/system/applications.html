@@ -137,7 +137,7 @@ ui.min.js"></script>
                                 <div class="row">
 
                                     <div class="col-xs-5" >
-                                        <h4>Select Application</h4>
+                                        <h4>Select Application:</h4>
                                         <select name="application">
 
                                             {{for i,(app_name) in enumerate(applicationsAvailable,1):}}
@@ -145,6 +145,11 @@ ui.min.js"></script>
 
                                             {{pass}}
                                         </select>
+                                    </div>
+                                    <div class="col-xs-2">
+                                    <br>
+                                        <input type="text" name="zookeeper">
+                                    </br>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -173,6 +178,7 @@ ui.min.js"></script>
                                             {{pass}}
                                         </select>
                                     </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -207,3 +213,4 @@ ui.min.js"></script>
     </br>
     <button type="submit" class="btn btn-primary" >Delete application</button>
 </form>
+
