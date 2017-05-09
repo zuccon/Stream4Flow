@@ -597,6 +597,9 @@ def clusterKill():
         alert_message2 = "Cluster was already not running!"
         alert_type2 = "danger"
     else:
+        #Delete the data from DB
+        db.applications.truncate()
+        db.performance.truncate()
         alert_message2 = "Cluster succesfully stopped!"
         alert_type2 = "success"
 
