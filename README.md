@@ -57,7 +57,7 @@ We have it all prepared for you. Everything is preconfigured. You have to only c
 
 _Note: The minimum hardware requirement is 12GB of RAM_
 
-1. download repository
+1. clone repository
 2. go to folder **provisioning/**
 3. (optional) update guests configuration in **configuration.yml**
 3. run vagrant provisioning: `vagrant up` or start guests separately `vagrant up <guest-name>`
@@ -70,7 +70,7 @@ See [provision/README.md](./provisioning/README.md) for additional information a
 
 _Note:  machines in the cluster must run Debian OS with systemd_
 
-1. download repository
+1. clone repository
 2. go to folder **provisioning/ansible**
 3. supply your inventory file with you cluster deployment according to file inventory.ini.example
 4. run ansible `ansible-playbook -i <your inventory file> site.yml --user <username> --ask-pass` (consult ansible docs for further information)

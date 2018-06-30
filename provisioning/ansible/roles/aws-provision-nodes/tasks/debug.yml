@@ -1,0 +1,10 @@
+---
+# - set_fact: outer_loop="{{ item }}"
+- debug:
+    msg: "{{ vars }}"
+
+
+- debug:
+    msg: "{{ node }}"  
+  tags: nodes
+  

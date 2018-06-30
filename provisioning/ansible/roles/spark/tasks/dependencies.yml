@@ -10,10 +10,10 @@
   apt: name=python2.7 state=latest update_cache=yes
 
 - name: Download master's public key
-  fetch: src=/home/{{ user }}/.ssh/id_rsa.pub dest=tmp/sparkMaster.pub flat=yes
+  fetch: src=/home/{{ user }}/.ssh/id_rsa.pub dest=files/sparkMaster.pub flat=yes
   when: "'sparkMaster' in group_names"
 
 - name: Add Spark master's public SSH key to authorized_keys
   authorized_key: user={{ user }} key="{{ item }}"
   with_file:
-    - tmp/sparkMaster.pub
+    - files/sparkMaster.pub

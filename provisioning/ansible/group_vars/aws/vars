@@ -1,0 +1,90 @@
+---
+# ami-a26d53db: Ubuntu 14.04 AMI in eu-west-1 only (change this ID if using a different region)
+#image_name: ami-a26d53db
+# ami-7c1bfd1b: But we use Red Hat
+image_name: ami-7c1bfd1b
+# Depends on the image, usually can be set to ubuntu, centos or ec2-user
+ssh_username: ec2-user
+env_name: stream4flow
+
+aws_config:
+  region: 'eu-west-2'
+  zone: 'eu-west-2a'
+  vpc_name: "{{ env_name }}-vpc"
+  vpc_cidr: '10.0.0.0/16'
+  subnet_name: '{{ env_name }}-subnet'
+  subnet_cidr: '10.0.10.0/24'
+  internet_gateway: true
+  admin_username: "{{ ssh_username }}"
+  ssh:
+    keyname: "{{ env_name }}-key"
+    publickey: '~/.ssh/id_rsa_aws.pub'
+    privatekey: '~/.ssh/id_rsa_aws'
+  security_groups:
+  - name: management
+    rules:
+      - {"proto":"tcp", "from_port":"22", "to_port":"22", "cidr_ip":"0.0.0.0/0"}
+    description: "SSH access - {{ env_name }}"
+  - name: s4f_frontend_access
+    rules:
+      - {"proto":"tcp", "from_port":"80", "to_port":"80", "cidr_ip":"0.0.0.0/0"}
+      - {"proto":"tcp", "from_port":"5601", "to_port":"5601", "cidr_ip":"0.0.0.0/0"}
+      - {"proto":"tcp", "from_port":"8080", "to_port":"8080", "cidr_ip":"0.0.0.0/0"}
+    description: "Stream4Flow Frontend access - {{ env_name }}"
+  - name: spark_frontend_access
+    rules:
+      - {"proto":"tcp", "from_port":"8080", "to_port":"8080", "cidr_ip":"0.0.0.0/0"}
+    description: "Spark Frontend access - {{ env_name }}"
+  - name: netflow_input
+    rules:
+      - {"proto":"udp", "from_port":"4739", "to_port":"4739", "cidr_ip":"0.0.0.0/0"}
+    description: "Netflow Input - {{ env_name }}"
+  - name: inter_node
+    rules:
+      - {"proto":"all", "group_name":"inter_node"}
+    description: "inter-nodes access - {{ env_name }}"
+
+nodes:
+- name: producer
+  type: m4.large
+  image: "{{ image_name }}"
+  count: 1
+  public_ip: true
+  security_groups: inter_node,management,netflow_input
+  root_volume:
+    ebs: true                                                    # non-EBS root volumes are not supported at the moment
+    type: gp2
+    size: 20
+
+- name: consumer
+  type: m4.large
+  image: "{{ image_name }}"
+  count: 1
+  public_ip: true
+  security_groups: inter_node,management,s4f_frontend_access
+  root_volume:
+    ebs: true                                                    # non-EBS root volumes are not supported at the moment
+    type: gp2
+    size: 20
+
+- name: sparkMaster
+  type: m4.large
+  image: "{{ image_name }}"
+  count: 1
+  public_ip: true
+  security_groups: inter_node,management,spark_frontend_access
+  root_volume:
+    ebs: true                                                    # non-EBS root volumes are not supported at the moment
+    type: gp2
+    size: 20
+
+- name: sparkSlave
+  type: m4.large
+  image: "{{ image_name }}"
+  count: 1
+  public_ip: true
+  security_groups: inter_node,management
+  root_volume:
+    ebs: true                                                    # non-EBS root volumes are not supported at the moment
+    type: gp2
+    size: 20

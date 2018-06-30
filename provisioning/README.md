@@ -36,6 +36,19 @@ All configuration of guest deployed by vagrant provisioning is in [configuration
 
 Available guest names: *producer*, *sparkMaster*, *sparkSlave101* ... *sparkSlave156*, *consumer*.
 
+## AWS Provisioning
+
+#TODO: IN PROGRESS
+
+AWS env variables
+virtualenv ~/ansible; source ~/ansible/bin/activate  
+which pip
+pip install setuptools --upgrade
+pip install pip --upgrade
+pip install ansible boto boto3
+ssh-keygen
+
+
 ## Ansible Provisioning
 
 Stream4Flow framework confogiration and variables are available in [ansible/group_vars/*](./ansible/group_vars/).

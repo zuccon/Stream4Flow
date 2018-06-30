@@ -1,0 +1,22 @@
+aws_config:
+  region: 'eu-west-1'
+  zone: 'eu-west-1a'
+  vpc_name: "my-vpc"
+  vpc_cidr: '10.0.0.0/16'
+  subnet_name: 'my-subnet'
+  subnet_cidr: '10.0.10.0/24'
+  internet_gateway: true
+  admin_username: ec2-user
+  ssh:
+    keyname: "my-key"
+    publickey: '~/.ssh/id_rsa.pub'
+    privatekey: '~/.ssh/id_rsa'
+  security_groups:
+  - name: management
+    rules:
+      - {"proto":"tcp", "from_port":"22", "to_port":"22", "cidr_ip":"0.0.0.0/0"}
+    description: "SSH access"
+  - name: inter_node
+    rules:
+      - {"proto":"all", "group_name":"inter_node"}
+    description: "inter-nodes access"

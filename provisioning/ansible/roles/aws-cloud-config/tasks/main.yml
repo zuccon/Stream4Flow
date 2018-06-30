@@ -1,0 +1,58 @@
+---
+- name: Create the VPC
+  ec2_vpc_net:
+    region: "{{ aws_config.region }}"
+    cidr_block: "{{ aws_config.vpc_cidr }}"
+    name: "{{ aws_config.vpc_name }}"
+    state: present
+  register: vpc
+
+- name: Create the Subnet
+  ec2_vpc_subnet:
+    region: "{{ aws_config.region }}"
+    az: "{{ aws_config.zone }}"
+    vpc_id: "{{ vpc.vpc.id }}"
+    cidr: "{{ aws_config.subnet_cidr }}"
+    resource_tags:
+      Name: "{{ aws_config.subnet_name }}"
+    state: present
+  register: subnet
+
+- name: Add an Internet Gateway to the VPC
+  ec2_vpc_igw:
+    region: "{{ aws_config.region }}"
+    vpc_id: "{{ vpc.vpc.id }}"
+    state: present
+  when: aws_config.internet_gateway
+  register: igw
+
+- name: Set up the public subnet route table for the Internet Gateway
+  ec2_vpc_route_table:
+    region: "{{ aws_config.region }}"
+    vpc_id: "{{ vpc.vpc.id }}"
+    subnets: "{{ subnet.subnet.id }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ igw.gateway_id }}"
+    state: present
+  when: igw.gateway_id is defined
+
+- name: Create Security Groups
+  ec2_group:
+    region: "{{ aws_config.region }}"
+    name: "{{ item.name }}"
+    vpc_id: "{{ vpc.vpc.id }}"
+    description: "{{ item.description }}"
+    purge_rules: false
+    purge_rules_egress: false
+    rules: "{{ item.rules }}"
+  with_items: "{{ aws_config.security_groups }}"
+  register: security_groups
+
+- name: Upload the SSH Key
+  ec2_key:
+    region: "{{ aws_config.region }}"
+    name: "{{ aws_config.ssh.keyname }}"
+    key_material: "{{ lookup('file', aws_config.ssh.publickey) }}"
+    state: present
+    wait: yes

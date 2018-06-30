@@ -1,0 +1,21 @@
+#!/usr/bin/env ansible-playbook
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+  - "group_vars/aws/vars"
+
+  tasks:
+  - name: Setup AWS Environment
+    include_role: 
+      name: aws-cloud-config
+
+  - name: Start EC2 Instances
+    include_tasks: roles/aws-provision-nodes/tasks/main.yml
+    vars:
+      node: "{{ item }}"
+    with_items: "{{ nodes }}"
+
+- name: Install Stream4Flow
+  import_playbook: site.yml

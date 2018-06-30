@@ -1,0 +1,58 @@
+---
+- name: Get AMI information
+  ec2_ami_facts:
+    region: "{{ aws_config.region }}"
+    image_ids: "{{ node.image }}"
+  register: current_ami
+
+- name: Fail if the AMI does not provide any information
+  fail:
+    msg: "The AMI {{ node.image }} does not exist in region {{ aws_config.region }} or it does not provide any information."
+  when: current_ami['images'] | length == 0
+
+- name: Create {{ node.name }} node(s) (EBS root volume)
+  ec2:
+    region: "{{ aws_config.region }}"
+    zone: "{{ aws_config.zone }}"
+    image: "{{ node.image }}"
+    instance_type: "{{ node.type }}"
+    vpc_subnet_id: "{{ subnet.subnet.id }}"
+    groups: "{{ node.security_groups }}"
+    assign_public_ip: "{{ node.public_ip }}"
+    key_name: "{{ aws_config.ssh.keyname }}"
+    exact_count: "{{ node.count }}"
+    volumes:
+      - device_name: "{{ current_ami['images'][0]['root_device_name'] }}"
+        volume_type: "{{ node.root_volume.type }}"
+        volume_size: "{{ node.root_volume.size }}"
+        delete_on_termination: true
+    count_tag:
+      Group: "{{ env_name }}-{{ node.name }}"
+    instance_tags:
+      Cluster: "{{ env_name }}"
+      Role: "{{ node.name }}"
+      Group: "{{ env_name }}-{{ node.name }}"
+    wait: yes
+    wait_timeout: 600
+  register: current_ec2
+  when: node.root_volume.ebs
+
+- name: Wait for SSH to start
+  wait_for:
+    host: "{{ (node.public_ip|default(false)== true) | ternary(local_loop.public_ip,local_loop.private_ip) }}"
+    port: 22
+    state: started
+    delay: 30
+    timeout: 300
+  loop_control:
+    loop_var: local_loop
+  with_items: '{{ current_ec2.instances }}'
+
+- name: Add node to {{ node.name }} group
+  add_host:
+    name: "{{ hostvars.ec2_dns_name }}"
+    ansible_host: "{{ (node.public_ip|default(false)== true) | ternary(hostvars.ec2_ip_address,hostvars.ec2_private_ip_address) }}"
+    ansible_user: "{{ aws_config.admin_username|default('root') }}"
+    ansible_ssh_private_key_file: "{{ aws_config.ssh.privatekey }}"
+    ansible_become_user: root
+    groups: "{{ node.name }}" 

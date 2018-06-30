@@ -1,3 +1,6 @@
+[edgenode]
+edgenode ansible_host=192.168.0.10
+
 [producer] 
 producer ansible_host=192.168.0.2 
 
