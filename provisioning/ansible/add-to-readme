@@ -1,7 +1,0 @@
-virtualenv ~/ansible; source ~/ansible/bin/activate  
-which pip
-pip install setuptools --upgrade
-pip install pip --upgrade
-pip install ansible boto boto3
-ssh-keygen
-
